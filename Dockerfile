@@ -1,14 +1,12 @@
-FROM redhat/rhel7
-MAINTAINER "Scott Collier" <scollier@redhat.com>
+FROM busybox:latest
+ENV PORT=8000
+LABEL maintainer="Chris <c@crccheck.com>"
 
-RUN yum -y update; yum clean all
-RUN yum -y install httpd; yum clean all
-RUN echo "Apache" >> /var/www/html/index.html
+ADD index.html /www/index.html
 
-EXPOSE 80
+# EXPOSE $PORT
 
-# Simple startup script to avoid some issues observed with container restart 
-ADD run-apache.sh /run-apache.sh
-RUN chmod -v +x /run-apache.sh
+HEALTHCHECK CMD nc -z localhost $PORT
 
-CMD ["/run-apache.sh"]
+# Create a basic webserver and run it until the container is stopped
+CMD echo "httpd started" && trap "exit 0;" TERM INT; httpd -v -p $PORT -h /www -f & wait
