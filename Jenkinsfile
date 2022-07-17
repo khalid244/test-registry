@@ -4,7 +4,7 @@ pipeline {
         DOCKER_TAG = getDockerTag()
     }
     tools {
-      docker "docker"
+      docker "Docker"
     }
     stages {
         stage('Build Docker Image') {
