@@ -2,6 +2,7 @@ pipeline {
     agent any
     environment {
         DOCKER_TAG = getDockerTag()
+        CI = 'true'
     }
     tools {
       docker "Docker"
