@@ -4,10 +4,12 @@ pipeline {
         DOCKER_TAG = getDockerTag()
     }
     stages {
-        stage('Initialize'){
-            def dockerHome = tool 'Docker'
-            env.PATH = "${dockerHome}/bin:${env.PATH}"
-        },
+        stage('Initialize') {
+            steps {
+                def dockerHome = tool 'Docker'
+                env.PATH = "${dockerHome}/bin:${env.PATH}"
+            }
+        }
         stage('Build Docker Image') {
             steps {
                 sh "docker build . -t 8858764865/test-registry:${DOCKER_TAG}"
