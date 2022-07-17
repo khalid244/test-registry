@@ -3,6 +3,9 @@ pipeline {
     environment {
         DOCKER_TAG = getDockerTag()
     }
+    tools {
+      docker "docker"
+    }
     stages {
         stage('Build Docker Image') {
             steps {
