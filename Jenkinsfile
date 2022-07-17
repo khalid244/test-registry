@@ -1,4 +1,4 @@
-pipline {
+pipeline {
     agent any
     environment {
         DOCKER_TAG = getDockerTag()
@@ -9,7 +9,6 @@ pipline {
                 sh "docker build . -t 8858764865/test-registry:${DOCKER_TAG}"
             }
         }
-
     }
 }
 
