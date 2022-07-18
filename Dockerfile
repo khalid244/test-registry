@@ -2,9 +2,6 @@ FROM busybox:latest
 ENV PORT=8000
 LABEL maintainer="Chris <c@crccheck.com>"
 
-COPY jenkins-slave /usr/local/bin/jenkins-slave
-ENTRYPOINT ["jenkins-slave"]
-
 ADD index.html /www/index.html
 
 # EXPOSE $PORT
