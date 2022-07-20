@@ -1,18 +1,95 @@
-podTemplate(containers: [
-    containerTemplate(name: 'docker', image: 'docker:latest', command: 'sleep', args: '99d'),
-  ]) {
+podTemplate(yaml: """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: docker
+    image: docker:latest
+    command: ['cat']
+    tty: true
+    volumeMounts:
+    - name: dockersock
+      mountPath: /var/run/docker.sock
+  volumes:
+  - name: dockersock
+    hostPath:
+      path: /var/run/docker.sock
+"""
+  ) {
 
-    node(POD_LABEL) {
-        container('docker') {
-            stage('Get a Docker project') {
-                sh 'docker build . -t 8858764865/test-registry'
-                sh 'docker login -u 8858764865 -p nijopa8266'
-                sh 'docker push 8858764865/test-registry'
-                sh 'docker logout'
-            }
-        }
+  def image = "8858764865/test-registry"
+  node(POD_LABEL) {
+    stage('Clone github project') {
+        git branch: 'main', url: 'https://github.com/khalid244/test-registry.git'
     }
+    stage('Build docker image') {
+      container('docker') {
+        sh "docker build -t ${image} ."
+      }
+    }
+    stage('Push docker image') {
+      container('docker') {
+        sh 'docker login -u 8858764865 -p nijopa8266'
+        sh "docker push ${image}"
+        sh 'docker logout'
+      }
+    }
+  }
 }
+
+
+// podTemplate(yaml: """
+// apiVersion: v1
+// kind: Pod
+// spec:
+//   containers:
+//   - name: docker
+//     image: docker:latest
+//     command: ['cat']
+//     tty: true
+//     volumeMounts:
+//     - name: dockersock
+//       mountPath: /var/run/docker.sock
+//   volumes:
+//   - name: dockersock
+//     hostPath:
+//       path: /var/run/docker.sock
+// """
+//   ) {
+
+//   def image = "8858764865/test-registry"
+//   node(POD_LABEL) {
+//     stage('Build Docker image') {
+//         git branch: 'main', url: 'https://github.com/khalid244/test-registry.git'
+//       container('docker') {
+//         sh "docker build -t ${image} ."
+//         sh 'docker login -u 8858764865 -p nijopa8266'
+//         sh "docker push ${image}"
+//         sh 'docker logout'
+//       }
+//     }
+//   }
+// }
+
+
+
+// podTemplate(containers: [
+//     containerTemplate(name: 'docker', image: 'docker:latest', command: 'sleep', args: '99d'),
+//   ]) {
+
+//     node(POD_LABEL) {
+//         container('docker') {
+//             git branch: 'main', url: 'https://github.com/khalid244/test-registry'
+//             // git branch: 'main', credentialsId: 'GithubCred', url: 'https://github.com/khalid244/test-registry'
+//             stage('Get a Docker project') {
+//                 sh 'docker build . -t 8858764865/test-registry'
+//                 sh 'docker login -u 8858764865 -p nijopa8266'
+//                 sh 'docker push 8858764865/test-registry'
+//                 sh 'docker logout'
+//             }
+//         }
+//     }
+// }
 
 
 // pipeline {
