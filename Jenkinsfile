@@ -1,41 +1,110 @@
-podTemplate(yaml: """
-apiVersion: v1
-kind: Pod
-spec:
-  containers:
-  - name: docker
-    image: docker:latest
-    command: ['cat']
-    tty: true
-    volumeMounts:
-    - name: dockersock
-      mountPath: /var/run/docker.sock
-  volumes:
-  - name: dockersock
-    hostPath:
-      path: /var/run/docker.sock
-"""
-  ) {
+// podTemplate(yaml: """
+// apiVersion: v1
+// kind: Pod
+// spec:
+//   containers:
+//   - name: docker
+//     image: docker:latest
+//     command: ['cat']
+//     tty: true
+//     volumeMounts:
+//     - name: dockersock
+//       mountPath: /var/run/docker.sock
+//   volumes:
+//   - name: dockersock
+//     hostPath:
+//       path: /var/run/docker.sock
+// """) {
+//def label = "worker-${UUID.randomUUID().toString()}"
 
-  def image = "8858764865/test-registry"
-  node(POD_LABEL) {
-    stage('Clone github project') {
-        git branch: 'main', url: 'https://github.com/khalid244/test-registry.git'
+
+podTemplate(containers: [
+    containerTemplate(name: 'docker', image: 'docker', command: 'cat', ttyEnabled: true),
+    containerTemplate(name: 'kubectl', image: 'lachlanevenson/k8s-kubectl', command: 'cat', ttyEnabled: true),
+],
+namespace: 'devops-tools', serviceAccount: 'jenkins-admin', automountServiceAccountToken: 'true',
+volumes: [
+  hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock')
+]) {
+
+    def deployment = "test-registry2"
+    def image = "8858764865/test-registry"
+    def username = "8858764865"
+    def password = "nijopa8266"
+    node(POD_LABEL) {
+        
+        stage('Clone github project') {
+            git branch: 'main', url: 'https://github.com/khalid244/test-registry.git'
+        }
+
+        stage('Build docker image') {
+            container('docker') {
+            sh "docker build -t ${image}:$BUILD_NUMBER ."
+            }
+        }
+
+        stage('Push docker image') {
+            container('docker') {
+            sh "docker login -u ${username} -p ${password}"
+            sh "docker push ${image}:$BUILD_NUMBER"
+            sh "docker logout"
+            }
+        }
+
+        stage('Deployt on kubernetes') {
+            container('kubectl') {
+                sh "kubectl set image deployment/${deployment} ${deployment}=${image}:$BUILD_NUMBER --namespace=default"
+            }
+        }
     }
-    stage('Build docker image') {
-      container('docker') {
-        sh "docker build -t ${image} ."
-      }
-    }
-    stage('Push docker image') {
-      container('docker') {
-        sh 'docker login -u 8858764865 -p nijopa8266'
-        sh "docker push ${image}"
-        sh 'docker logout'
-      }
-    }
-  }
 }
+
+
+
+
+
+
+
+
+
+// podTemplate(yaml: """
+// apiVersion: v1
+// kind: Pod
+// spec:
+//   containers:
+//   - name: docker
+//     image: docker:latest
+//     command: ['cat']
+//     tty: true
+//     volumeMounts:
+//     - name: dockersock
+//       mountPath: /var/run/docker.sock
+//   volumes:
+//   - name: dockersock
+//     hostPath:
+//       path: /var/run/docker.sock
+// """
+//   ) {
+
+//   def image = "8858764865/test-registry"
+//   node(POD_LABEL) {
+//     stage('Clone github project') {
+//         git branch: 'main', url: 'https://github.com/khalid244/test-registry.git'
+//     }
+//     stage('Build docker image') {
+//       container('docker') {
+//         sh "docker build -t ${image} ."
+//       }
+//     }
+//     stage('Push docker image') {
+//       container('docker') {
+//         sh 'docker login -u 8858764865 -p nijopa8266'
+//         sh "docker push ${image}"
+//         sh 'docker logout'
+//       }
+//     }
+//   }
+// }
 
 
 // podTemplate(yaml: """
